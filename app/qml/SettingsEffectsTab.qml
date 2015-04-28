@@ -21,6 +21,7 @@
 import QtQuick 2.2
 import QtQuick.Controls 1.1
 import QtQuick.Layouts 1.1
+import QtQuick.Dialogs 1.1
 
 Tab{
     GroupBox{
@@ -80,6 +81,54 @@ Tab{
                 onNewValue: appSettings.rbgShift = newValue;
                 value: appSettings.rbgShift;
                 enabled: appSettings.chromaColor !== 0
+            }
+            CheckableSlider{
+                name: qsTr("Glass Reflection")
+                onNewValue: appSettings.glassReflection = newValue;
+                value: appSettings.glassReflection
+            }
+            RowLayout{
+                Image{
+                    width: 100
+                    height: 70
+                    sourceSize.width: 100
+                    sourceSize.height: 70
+                    source: appSettings.glassReflectionImage
+                    fillMode: Image.PreserveAspectFit
+                    enabled: appSettings.glassReflection !== 0
+                }
+                Action{
+                    id: openDialogAction
+                    onTriggered: fileDialog.open()
+                }
+                ColumnLayout{
+                    Label{
+                        text: "Choose a file:"
+                    }
+                    RowLayout{
+                        Button{
+                            text: "From disk"
+                            action: openDialogAction
+                            enabled: appSettings.glassReflection !== 0
+                        }
+                        // Button{
+                        //     text: "Webcam"
+                        // }
+                    }
+                    FileDialog {
+                        id: fileDialog
+                        title: "Please choose a file"
+                        nameFilters: [ "Image files (*.jpg *.png)", "All files (*)" ]
+                        onAccepted: {
+                            console.log("You chose: " + fileDialog.fileUrl)
+                            appSettings.glassReflectionImage = fileUrl
+                            // reflectionImagePreview.source = fileUrl
+                        }
+                        onRejected: {
+                            console.log("Canceled")
+                        }
+                    }
+                }
             }
         }
     }

@@ -46,6 +46,9 @@ ShaderEffect {
 
     property real rbgShift: appSettings.rbgShift * 0.2
 
+    property real glassReflection: appSettings.glassReflection
+    property url glassReflectionImage: appSettings.glassReflectionImage
+
     property real flickering: appSettings.flickering
     property real horizontalSync: appSettings.horizontalSync * 0.5
 
@@ -93,6 +96,25 @@ ShaderEffect {
     ShaderEffectSource{
         id: noiseShaderSource
         sourceItem: noiseTexture
+        wrapMode: ShaderEffectSource.Repeat
+        visible: false
+        smooth: true
+    }
+
+    property ShaderEffectSource glassReflectionSource: glassReflectionShaderSource
+
+    // User-defined image for glass reflection.
+    Image{
+        id: glassReflectionTexture
+        source: glassReflectionImage
+        width: 512
+        height: 512
+        fillMode: Image.Tile
+        visible: false
+    }
+    ShaderEffectSource{
+        id: glassReflectionShaderSource
+        sourceItem: glassReflectionTexture
         wrapMode: ShaderEffectSource.Repeat
         visible: false
         smooth: true
@@ -190,6 +212,9 @@ ShaderEffect {
             uniform lowp float jitter;" : "") +
         (rbgShift !== 0 ? "
             uniform lowp float rbgShift;" : "") +
+        (glassReflection !== 0 ? "
+            uniform lowp float glassReflection;
+            uniform lowp sampler2D glassReflectionSource;" : "") +
 
         (fallBack && horizontalSync !== 0 ? "
             uniform lowp float horizontalSync;" : "") +
@@ -275,6 +300,10 @@ ShaderEffect {
                 float noiseVal = noiseTexel.a;
                 color += noiseVal * noise * (1.0 - distance * 1.3);" : "") +
 
+
+            (glassReflection !== 0 ? "
+                vec4 reflectionTexel = texture2D(glassReflectionSource, coords);" : "") +
+
             (glowingLine !== 0 ? "
                 color += randomPass(coords * virtual_resolution) * glowingLine;" : "") +
 
@@ -303,6 +332,9 @@ ShaderEffect {
                 "vec3 finalColor = mix(backgroundColor.rgb, fontColor.rgb, greyscale_color);") +
 
             "finalColor *= getScanlineIntensity(coords);" +
+
+            (glassReflection !== 0 ?
+                "finalColor += reflectionTexel.rgb * glassReflection;" : "") +
 
             (bloom !== 0 ?
                 "vec4 bloomFullColor = texture2D(bloomSource, coords);

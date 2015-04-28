@@ -28,7 +28,7 @@ Window {
     id: settings_window
     title: qsTr("Settings")
     width: 580
-    height: 400
+    height: 500
 
     property int tabmargins: 15
 
