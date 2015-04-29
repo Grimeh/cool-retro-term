@@ -47,7 +47,11 @@ ShaderEffect {
     property real rbgShift: appSettings.rbgShift * 0.2
 
     property real glassReflection: appSettings.glassReflection
+    property real reflectionSaturation: appSettings.reflectionSaturation
     property url glassReflectionImage: appSettings.glassReflectionImage
+    property size scaleReflectionSize: Qt.size((width) / (glassReflectionTexture.width * appSettings.windowScaling * appSettings.fontScaling),
+                                               (height) / (glassReflectionTexture.height * appSettings.windowScaling * appSettings.fontScaling))
+    property size reflectionScale: scaleReflectionSize// / max(width / glassReflectionTexture.width, height / glassReflectionTexture)
 
     property real flickering: appSettings.flickering
     property real horizontalSync: appSettings.horizontalSync * 0.5
@@ -107,9 +111,7 @@ ShaderEffect {
     Image{
         id: glassReflectionTexture
         source: glassReflectionImage
-        width: 512
-        height: 512
-        fillMode: Image.Tile
+        fillMode: Image.PreserveAspectFit
         visible: false
     }
     ShaderEffectSource{
@@ -173,6 +175,10 @@ ShaderEffect {
         }"
 
     fragmentShader: "
+        #define Blend(base, blend, funcf) 		vec3(funcf(base.r, blend.r), funcf(base.g, blend.g), funcf(base.b, blend.b))
+        #define BlendScreenf(base, blend) 		(1.0 - ((1.0 - base) * (1.0 - blend)))
+        #define BlendScreen(base, blend) 		Blend(base, blend, BlendScreenf)
+
         #ifdef GL_ES
             precision mediump float;
         #endif
@@ -214,7 +220,10 @@ ShaderEffect {
             uniform lowp float rbgShift;" : "") +
         (glassReflection !== 0 ? "
             uniform lowp float glassReflection;
-            uniform lowp sampler2D glassReflectionSource;" : "") +
+            uniform lowp float reflectionSaturation;
+            uniform lowp sampler2D glassReflectionSource;
+            uniform highp vec2 scaleReflectionSize;
+            uniform highp vec2 reflectionScale;" : "") +
 
         (fallBack && horizontalSync !== 0 ? "
             uniform lowp float horizontalSync;" : "") +
@@ -243,6 +252,12 @@ ShaderEffect {
                 result *= mix(val, " + absSinAvg + ", rasterizationSmooth.x);" : "") + "
 
            return result;
+        }
+
+        vec4 Desaturate(vec3 color, float Desaturation) {
+        	vec3 grayXfer = vec3(0.3, 0.59, 0.11);
+        	vec3 gray = vec3(dot(grayXfer, color));
+        	return vec4(mix(color, gray, Desaturation), 1.0);
         }
 
         float rgb2grey(vec3 v){
@@ -278,6 +293,9 @@ ShaderEffect {
 
             "vec2 coords = staticCoords;" +
 
+            (glassReflection !== 0 ? "
+                vec4 reflectionTexel = Desaturate(texture2D(glassReflectionSource, abs(coords * reflectionScale)).rgb * glassReflection, reflectionSaturation);" : "") +
+
             (horizontalSync !== 0 ? "
                 float dst = sin((coords.y + time * 0.001) * distortionFreq);
                 coords.x += dst * distortionScale;" +
@@ -299,10 +317,6 @@ ShaderEffect {
             (staticNoise !== 0 ? "
                 float noiseVal = noiseTexel.a;
                 color += noiseVal * noise * (1.0 - distance * 1.3);" : "") +
-
-
-            (glassReflection !== 0 ? "
-                vec4 reflectionTexel = texture2D(glassReflectionSource, coords);" : "") +
 
             (glowingLine !== 0 ? "
                 color += randomPass(coords * virtual_resolution) * glowingLine;" : "") +
@@ -334,7 +348,7 @@ ShaderEffect {
             "finalColor *= getScanlineIntensity(coords);" +
 
             (glassReflection !== 0 ?
-                "finalColor += reflectionTexel.rgb * glassReflection;" : "") +
+                "finalColor = BlendScreen(finalColor, reflectionTexel);" : "") +
 
             (bloom !== 0 ?
                 "vec4 bloomFullColor = texture2D(bloomSource, coords);

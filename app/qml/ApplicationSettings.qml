@@ -77,6 +77,7 @@ QtObject{
     property real rbgShift: 0.0
 
     property real glassReflection: 0.0
+    property real reflectionSaturation: 0.1
     property url glassReflectionImage: "images/crt256.png"
 
     readonly property int no_rasterization: 0
@@ -239,6 +240,7 @@ QtObject{
             jitter: jitter,
             rbgShift: rbgShift,
             glassReflection: glassReflection,
+            reflectionSaturation: reflectionSaturation,
             glassReflectionImage: glassReflectionImage.toString(),
             brightness: brightness,
             contrast: contrast,
@@ -326,6 +328,7 @@ QtObject{
         rbgShift = settings.rbgShift !== undefined ? settings.rbgShift : rbgShift;
 
         glassReflection = settings.glassReflection !== undefined ? settings.glassReflection : glassReflection;
+        reflectionSaturation = settings.reflectionSaturation !== undefined ? settings.reflectionSaturation : reflectionSaturation;
         glassReflectionImage = settings.glassReflectionImage !== undefined ? settings.glassReflectionImage : glassReflectionImage;
 
         ambientLight = settings.ambientLight !== undefined ? settings.ambientLight : ambientLight;

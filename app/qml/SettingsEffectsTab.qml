@@ -87,6 +87,12 @@ Tab{
                 onNewValue: appSettings.glassReflection = newValue;
                 value: appSettings.glassReflection
             }
+            CheckableSlider{
+                name: qsTr("Reflection Desaturation")
+                onNewValue: appSettings.reflectionSaturation = newValue;
+                value: appSettings.reflectionSaturation
+                enabled: appSettings.glassReflection !== 0
+            }
             RowLayout{
                 Image{
                     width: 100
